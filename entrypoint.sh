@@ -22,7 +22,7 @@ fi
 
 # Test connectivity with detailed output
 echo "⏳ Testing database connection..."
-echo "Command: pg_isready -h '${POSTGRES_HOST:-localhost}' -p '${POSTGRES_PORT:-5432}' -U '${POSTGRES_USER}'"
+echo "Command: pg_isready -h '${POSTGRES_HOST:-localhost}' -p '${POSTGRES_PORT:-5432}' -U '${POSTGRES_USER:-postgres}'"
 
 # Try connection with timeout
 max_attempts=10
@@ -32,12 +32,12 @@ while [ $attempt -lt $max_attempts ]; do
     attempt=$((attempt + 1))
     echo "📡 Connection attempt $attempt/$max_attempts..."
     
-    if pg_isready -h "${POSTGRES_HOST:-localhost}" -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_USER}" -v; then
+    if pg_isready -h "${POSTGRES_HOST:-localhost}" -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_USER}"; then
         echo "✅ Database connection established!"
         break
     else
         echo "❌ Connection failed. Error details:"
-        pg_isready -h "${POSTGRES_HOST:-localhost}" -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_USER}" -v 2>&1 || true
+        pg_isready -h "${POSTGRES_HOST:-localhost}" -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_USER}" 2>&1 || true
         
         if [ $attempt -eq $max_attempts ]; then
             echo "💥 Maximum connection attempts reached. Exiting with debug info."
