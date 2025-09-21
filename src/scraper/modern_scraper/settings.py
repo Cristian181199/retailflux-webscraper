@@ -3,12 +3,8 @@
 # https://docs.scrapy.org/en/latest/topics/settings.html
 
 import os
-from dotenv import load_dotenv
-
-# --- Load Environment Variables ---
-# Load variables from the .env file located at the project root.
-env_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '.env')
-load_dotenv(dotenv_path=env_path)
+# Note: Environment variables are automatically available in Docker/Dokploy
+# No need to load from .env file in production
 
 # --- General Project Settings ---
 BOT_NAME = "modern_scraper"

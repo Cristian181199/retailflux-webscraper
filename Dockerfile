@@ -10,12 +10,13 @@ ENV PYTHONPATH=/app/src
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including pg_isready for health checks
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         gcc \
         g++ \
         curl \
+        postgresql-client \
         libpq-dev \
         libxml2-dev \
         libxslt1-dev \
