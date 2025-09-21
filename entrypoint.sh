@@ -4,13 +4,55 @@ set -e
 echo "🕷️ RetailFlux Scraper"
 echo "======================"
 
-# Wait for the database to be ready
-echo "⏳ Waiting for database connection..."
-while ! pg_isready -h "${POSTGRES_HOST:-localhost}" -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_USER}" -q; do
-  echo "  Database not ready, waiting 3 seconds..."
-  sleep 3
+# Debug environment variables
+echo "🔍 Debug: Database connection parameters:"
+echo "  POSTGRES_HOST: ${POSTGRES_HOST:-not set}"
+echo "  POSTGRES_PORT: ${POSTGRES_PORT:-not set}"
+echo "  POSTGRES_DB: ${POSTGRES_DB:-not set}"
+echo "  POSTGRES_USER: ${POSTGRES_USER:-not set}"
+echo "  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:+[SET]}"
+
+# Test DNS resolution
+echo "🌐 Testing DNS resolution..."
+if command -v nslookup >/dev/null 2>&1; then
+    nslookup "${POSTGRES_HOST}" || echo "❌ DNS resolution failed"
+else
+    echo "ℹ️ nslookup not available, trying direct connection"
+fi
+
+# Test connectivity with detailed output
+echo "⏳ Testing database connection..."
+echo "Command: pg_isready -h '${POSTGRES_HOST:-localhost}' -p '${POSTGRES_PORT:-5432}' -U '${POSTGRES_USER}'"
+
+# Try connection with timeout
+max_attempts=10
+attempt=0
+
+while [ $attempt -lt $max_attempts ]; do
+    attempt=$((attempt + 1))
+    echo "📡 Connection attempt $attempt/$max_attempts..."
+    
+    if pg_isready -h "${POSTGRES_HOST:-localhost}" -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_USER}" -v; then
+        echo "✅ Database connection established!"
+        break
+    else
+        echo "❌ Connection failed. Error details:"
+        pg_isready -h "${POSTGRES_HOST:-localhost}" -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_USER}" -v 2>&1 || true
+        
+        if [ $attempt -eq $max_attempts ]; then
+            echo "💥 Maximum connection attempts reached. Exiting with debug info."
+            echo "🔧 Possible solutions:"
+            echo "   1. Check if both services are in the same Docker network"
+            echo "   2. Verify database service is running and healthy"
+            echo "   3. Confirm POSTGRES_HOST matches the database service name in Dokploy"
+            echo "   4. Check firewall/security group settings"
+            exit 1
+        fi
+        
+        echo "⏸️ Waiting 5 seconds before retry..."
+        sleep 5
+    fi
 done
-echo "✅ Database connection established."
 
 # Move to the scraper directory
 cd /app/src/scraper
