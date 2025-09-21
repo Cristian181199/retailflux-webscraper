@@ -1,0 +1,52 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Development data and logs
+src/scraper/modern_scraper/data/
+src/scraper/modern_scraper/logs/
+data/
+logs/
+*.log
+*.jsonl
+*.gz
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Test coverage
+.coverage
+.pytest_cache/
+
+# Development files
+*.tmp
+*.temp
+debug/
+*.pid
+
+# Scraped data (development)
+*.csv
+*.json
+*.xml
