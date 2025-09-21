@@ -1,0 +1,8 @@
+# src/scraper/requirements.txt
+Scrapy
+psycopg2-binary
+python-dotenv
+
+# --- ORM y Migraciones ---
+SQLAlchemy
+alembic

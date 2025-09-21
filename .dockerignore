@@ -1,0 +1,31 @@
+# Ignore git files
+.git
+.gitignore
+.github
+
+# Python virtual environments
+.venv
+venv/
+ENV/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Logs and development files
+logs/
+data/
+debug/
+*.log
+*.tmp
+*.json
+*.gz
+
+# Documentation
+*.md
