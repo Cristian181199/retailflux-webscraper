@@ -6,3 +6,8 @@ python-dotenv
 # --- ORM y Migraciones ---
 SQLAlchemy
 alembic
+
+# --- Proxy and Network ---
+requests>=2.31.0
+httpx>=0.24.0
+twisted>=22.10.0

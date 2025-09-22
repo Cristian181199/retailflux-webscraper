@@ -46,9 +46,10 @@ DEFAULT_REQUEST_HEADERS = {
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-# DOWNLOADER_MIDDLEWARES = {
-#     "modern_scraper.middlewares.ModernScraperDownloaderMiddleware": 543,
-# }
+DOWNLOADER_MIDDLEWARES = {
+    "modern_scraper.middlewares.brightdata_proxy.BrightdataProxyMiddleware": 350,
+    "scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware": 400,
+}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -109,3 +110,21 @@ POSTGRES_PORT = os.getenv('POSTGRES_PORT', '5432')
 POSTGRES_DB = os.getenv('POSTGRES_DB', 'products_db')
 POSTGRES_USER = os.getenv('POSTGRES_USER', 'postgres')
 POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'postgres')
+
+# --- Brightdata Proxy Configuration ---
+# Enable/disable proxy usage
+USE_PROXIES = os.getenv('USE_PROXIES', 'false').lower() == 'true'
+
+# Brightdata credentials and settings
+BRIGHTDATA_USERNAME = os.getenv('BRIGHTDATA_USERNAME', '')
+BRIGHTDATA_PASSWORD = os.getenv('BRIGHTDATA_PASSWORD', '')
+BRIGHTDATA_ENDPOINT = os.getenv('BRIGHTDATA_ENDPOINT', 'brd.superproxy.io')
+BRIGHTDATA_PORT = int(os.getenv('BRIGHTDATA_PORT', '22225'))
+BRIGHTDATA_ZONE = os.getenv('BRIGHTDATA_ZONE', 'residential')
+BRIGHTDATA_COUNTRY = os.getenv('BRIGHTDATA_COUNTRY', 'DE')
+
+# Proxy management settings
+BRIGHTDATA_MAX_SESSIONS = int(os.getenv('BRIGHTDATA_MAX_SESSIONS', '5'))
+BRIGHTDATA_ROTATION_INTERVAL = int(os.getenv('BRIGHTDATA_ROTATION_INTERVAL', '10'))
+BRIGHTDATA_TIMEOUT = int(os.getenv('BRIGHTDATA_TIMEOUT', '30'))
+BRIGHTDATA_MAX_RETRIES = int(os.getenv('BRIGHTDATA_MAX_RETRIES', '3'))
