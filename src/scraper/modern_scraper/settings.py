@@ -96,13 +96,25 @@ FEED_EXPORT_ENCODING = "utf-8"
 LOG_LEVEL = 'INFO'
 LOG_FORMAT = '%(levelname)s: %(message)s'
 
-# --- Development Configuration ---
+# --- Environment-Aware Configuration ---
+# Use environment variables to control scraping limits
+TEST_MODE = os.getenv('TEST_MODE', 'true').lower() == 'true'
+MAX_ITEMS = int(os.getenv('MAX_ITEMS', '5' if TEST_MODE else '0'))
+MAX_PAGES = int(os.getenv('MAX_PAGES', '20' if TEST_MODE else '0'))
+MAX_SITEMAPS = int(os.getenv('MAX_SITEMAPS', '1' if TEST_MODE else '0'))
+MAX_PRODUCTS_PER_CATEGORY = int(os.getenv('MAX_PRODUCTS_PER_CATEGORY', '5' if TEST_MODE else '0'))
+
 DEV_SCRAPER_SETTINGS = {
-    'max_sitemaps': 1,  # Limit sitemaps for testing
-    'max_products_per_category': 5,  # Reduced for faster testing
-    'test_mode': True,  # Continue on errors in development
+    'max_sitemaps': MAX_SITEMAPS,
+    'max_products_per_category': MAX_PRODUCTS_PER_CATEGORY,
+    'test_mode': TEST_MODE,
     'enable_data_export': True,
 }
+
+# Override Scrapy's close spider settings based on environment
+CLOSESPIDER_ITEMCOUNT = MAX_ITEMS  # 0 means no limit
+CLOSESPIDER_PAGECOUNT = MAX_PAGES  # 0 means no limit
+CLOSESPIDER_TIMEOUT = int(os.getenv('MAX_TIME_SECONDS', '300' if TEST_MODE else '10800'))  # 5 min dev, 3 hours prod
 
 # --- Database Configuration ---
 POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'localhost')

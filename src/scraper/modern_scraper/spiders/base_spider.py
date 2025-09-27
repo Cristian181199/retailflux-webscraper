@@ -90,13 +90,16 @@ class BaseSpider(scrapy.Spider):
             }
         else:
             # Default limits when crawler is not available yet
+            # Check environment variables directly
+            import os
+            test_mode = os.getenv('TEST_MODE', 'true').lower() == 'true'
             return {
-                'max_items': 5,  # Reduced for faster testing
-                'max_pages': 20, # Reduced for faster testing
-                'max_time_minutes': 3,
-                'max_sitemaps': 1,
-                'max_products_per_category': 5,
-                'test_mode': True,
+                'max_items': int(os.getenv('MAX_ITEMS', '5' if test_mode else '0')),
+                'max_pages': int(os.getenv('MAX_PAGES', '20' if test_mode else '0')),
+                'max_time_minutes': int(os.getenv('MAX_TIME_SECONDS', '300' if test_mode else '10800')) // 60,
+                'max_sitemaps': int(os.getenv('MAX_SITEMAPS', '1' if test_mode else '0')),
+                'max_products_per_category': int(os.getenv('MAX_PRODUCTS_PER_CATEGORY', '5' if test_mode else '0')),
+                'test_mode': test_mode,
             }
     
     async def start(self):
