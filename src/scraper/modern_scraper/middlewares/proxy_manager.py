@@ -195,81 +195,64 @@ class ProxyManager:
         Returns:
             Tuple of (proxy_url, meta_data) or None if no proxy available
         """
+        # Force reload config in case environment changed
+        self.config_manager._load_from_environment()
+        
         if not self.config_manager.is_enabled():
             return None
         
-        # Clean expired sessions and blacklist
-        self._cleanup_expired()
-        
-        # Ensure we have active sessions
-        self._ensure_sessions()
-        
-        # Get active sessions
-        active_sessions = [s for s in self.sessions.values() if not s.is_expired]
-        
-        if not active_sessions:
-            logger.error("❌ No active proxy sessions available")
+        # Use direct configuration without session management
+        config = self.config_manager.get_config()
+        if not config:
+            logger.error("❌ No proxy configuration available")
             return None
         
-        # Select next proxy
-        selected_session = self.rotator.select_next(active_sessions, self.metrics)
-        
-        if not selected_session:
-            logger.error("❌ Failed to select proxy session")
-            return None
-        
-        # Update usage
-        selected_session.use()
-        self.requests_since_rotation += 1
+        # Generate simple session ID for tracking
+        simple_session_id = f"direct-{int(time.time() % 10000)}"
         
         # Prepare meta data
         meta_data = {
-            'proxy_session_id': selected_session.session_id,
-            'proxy_created_at': selected_session.created_at,
-            'proxy_requests_count': selected_session.requests_count,
+            'proxy_session_id': simple_session_id,
+            'proxy_created_at': datetime.now(),
+            'proxy_requests_count': 1,
         }
         
-        logger.debug(f"🔄 Using proxy session {selected_session.session_id[:8]}... "
-                    f"({selected_session.requests_count} requests)")
+        logger.debug(f"🔄 Using direct proxy connection: {simple_session_id}")
         
-        return selected_session.proxy_url, meta_data
+        return config.proxy_url, meta_data
     
     def record_success(self, session_id: str, response_time: float = 0.0):
         """Record successful request for metrics."""
-        if session_id in self.metrics:
-            metric = self.metrics[session_id]
-            metric.requests_sent += 1
-            metric.successful_requests += 1
-            metric.last_used = datetime.now()
-            metric.last_success = datetime.now()
-            
-            if response_time > 0:
-                metric.response_times.append(response_time)
-                metric.average_response_time = sum(metric.response_times) / len(metric.response_times)
-            
-            logger.debug(f"✅ Recorded success for session {session_id[:8]}... "
-                        f"(Success rate: {metric.success_rate:.1f}%)")
+        # Create or update metrics for direct connection
+        metric = self.metrics["direct"]
+        metric.requests_sent += 1
+        metric.successful_requests += 1
+        metric.last_used = datetime.now()
+        metric.last_success = datetime.now()
+        
+        if response_time > 0:
+            metric.response_times.append(response_time)
+            metric.average_response_time = sum(metric.response_times) / len(metric.response_times)
+        
+        logger.debug(f"✅ Recorded success for direct proxy connection "
+                    f"(Success rate: {metric.success_rate:.1f}%)")
     
     def record_failure(self, session_id: str, error_type: str = "unknown"):
         """Record failed request for metrics."""
-        if session_id in self.metrics:
-            metric = self.metrics[session_id]
-            metric.requests_sent += 1
-            metric.failed_requests += 1
-            metric.last_used = datetime.now()
-            metric.last_failure = datetime.now()
-            
-            if error_type == "blocked":
-                metric.blocked_requests += 1
-            elif error_type == "timeout":
-                metric.timeout_requests += 1
-            
-            # Blacklist if too many failures
-            if metric.success_rate < 50 and metric.requests_sent > 10:
-                self._blacklist_session(session_id)
-            
-            logger.debug(f"❌ Recorded {error_type} for session {session_id[:8]}... "
-                        f"(Success rate: {metric.success_rate:.1f}%)")
+        # Create or update metrics for direct connection
+        metric = self.metrics["direct"]
+        metric.requests_sent += 1
+        metric.failed_requests += 1
+        metric.last_used = datetime.now()
+        metric.last_failure = datetime.now()
+        
+        if error_type == "blocked":
+            metric.blocked_requests += 1
+        elif error_type == "timeout":
+            metric.timeout_requests += 1
+        
+        logger.debug(f"❌ Recorded {error_type} for direct proxy connection "
+                    f"(Success rate: {metric.success_rate:.1f}%)")
     
     def _ensure_sessions(self):
         """Ensure we have enough active sessions."""
@@ -291,8 +274,7 @@ class ProxyManager:
                 endpoint=config.endpoint,
                 port=config.port,
                 zone=config.zone,
-                country=config.country,
-                session_id=session_id
+                country=config.country
             )
             
             session = ProxySession(
@@ -358,33 +340,26 @@ class ProxyManager:
     
     def get_stats(self) -> Dict[str, any]:
         """Get comprehensive proxy statistics."""
-        active_sessions = [s for s in self.sessions.values() if not s.is_expired]
-        
-        total_requests = sum(m.requests_sent for m in self.metrics.values())
-        total_successful = sum(m.successful_requests for m in self.metrics.values())
-        total_failed = sum(m.failed_requests for m in self.metrics.values())
-        
-        overall_success_rate = (total_successful / total_requests * 100) if total_requests > 0 else 0
+        direct_metric = self.metrics["direct"]
         
         return {
             "enabled": self.config_manager.is_enabled(),
-            "active_sessions": len(active_sessions),
-            "total_sessions": len(self.sessions),
-            "blacklisted_sessions": len(self.blacklisted_sessions),
-            "max_sessions": self.max_sessions,
+            "active_sessions": 1 if self.config_manager.is_enabled() else 0,
+            "total_sessions": 1 if self.config_manager.is_enabled() else 0,
+            "blacklisted_sessions": 0,
+            "max_sessions": 1,  # Direct connection
             "rotation_interval": self.rotation_interval,
-            "requests_since_rotation": self.requests_since_rotation,
-            "total_requests": total_requests,
-            "successful_requests": total_successful,
-            "failed_requests": total_failed,
-            "overall_success_rate": round(overall_success_rate, 2),
+            "requests_since_rotation": direct_metric.requests_sent,
+            "total_requests": direct_metric.requests_sent,
+            "successful_requests": direct_metric.successful_requests,
+            "failed_requests": direct_metric.failed_requests,
+            "overall_success_rate": round(direct_metric.success_rate, 2),
             "session_details": [
                 {
-                    "id": s.session_id[:8],
-                    "requests": s.requests_count,
-                    "success_rate": round(self.metrics[s.session_id].success_rate, 2),
-                    "created_minutes_ago": round((datetime.now() - s.created_at).seconds / 60, 1)
+                    "id": "direct",
+                    "requests": direct_metric.requests_sent,
+                    "success_rate": round(direct_metric.success_rate, 2),
+                    "created_minutes_ago": 0  # Direct connection
                 }
-                for s in active_sessions
-            ]
+            ] if self.config_manager.is_enabled() else []
         }

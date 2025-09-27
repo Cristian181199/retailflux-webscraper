@@ -22,7 +22,6 @@ class BrightdataConfig:
     port: int
     zone: str
     country: str = "DE"  # Germany by default for Edeka24
-    session_id: Optional[str] = None
     
     def __post_init__(self):
         """Validate configuration after initialization."""
@@ -32,13 +31,8 @@ class BrightdataConfig:
     @property
     def proxy_url(self) -> str:
         """Generate complete proxy URL."""
-        if self.session_id:
-            # Para sesiones sticky, agregar session ID
-            auth = f"{self.username}-session-{self.session_id}:{self.password}"
-        else:
-            # Username ya incluye country y zone, usar directamente
-            auth = f"{self.username}:{self.password}"
-        
+        # Username ya incluye country y zone, usar directamente como en ejemplo oficial
+        auth = f"{self.username}:{self.password}"
         return f"http://{auth}@{self.endpoint}:{self.port}"
     
     @property
