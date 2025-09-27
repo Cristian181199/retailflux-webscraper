@@ -33,9 +33,11 @@ class BrightdataConfig:
     def proxy_url(self) -> str:
         """Generate complete proxy URL."""
         if self.session_id:
+            # Para sesiones sticky, agregar session ID
             auth = f"{self.username}-session-{self.session_id}:{self.password}"
         else:
-            auth = f"{self.username}-country-{self.country}:{self.password}"
+            # Username ya incluye country y zone, usar directamente
+            auth = f"{self.username}:{self.password}"
         
         return f"http://{auth}@{self.endpoint}:{self.port}"
     
@@ -65,7 +67,7 @@ class BrightdataConfigManager:
                 username=os.getenv('BRIGHTDATA_USERNAME', ''),
                 password=os.getenv('BRIGHTDATA_PASSWORD', ''),
                 endpoint=os.getenv('BRIGHTDATA_ENDPOINT', 'brd.superproxy.io'),
-                port=int(os.getenv('BRIGHTDATA_PORT', '22225')),
+                port=int(os.getenv('BRIGHTDATA_PORT', '33335')),
                 zone=os.getenv('BRIGHTDATA_ZONE', 'residential'),
                 country=os.getenv('BRIGHTDATA_COUNTRY', 'DE')
             )
